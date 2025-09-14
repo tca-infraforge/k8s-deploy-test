@@ -1,0 +1,78 @@
+name: Deploy k8s-deploy-test to TCA-InfraForge
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+        - development
+        - staging
+        - production
+
+env:
+  TCA_ENV: ${{ github.event.inputs.environment || 'development' }}
+  APP_NAME: k8s-deploy-test
+  IMAGE_NAME: temitayocharles/k8s-deploy-test
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Application Code
+      uses: actions/checkout@v4
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Setup kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.28.0'
+
+    - name: Configure kubectl
+      run: |
+        mkdir -p ~/.kube
+        echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
+        chmod 600 ~/.kube/config
+
+    - name: Build and Push Application Image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ env.IMAGE_NAME }}:${{ github.sha }},${{ env.IMAGE_NAME }}:latest
+
+    - name: Deploy k8s-deploy-test
+      run: |
+        # Deploy the application
+        kubectl apply -f TCA-InfraForge/manifests/apps/k8s-deploy-test-deployment.yaml
+        kubectl set image deployment/k8s-deploy-test k8s-deploy-test=${{ env.IMAGE_NAME }}:${{ github.sha }} -n services
+        kubectl rollout status deployment/k8s-deploy-test -n services --timeout=300s
+
+    - name: Run Post-Deployment Tests
+      run: |
+        kubectl wait --for=condition=available --timeout=300s deployment/k8s-deploy-test -n services
+        # Test the application endpoint
+        kubectl run test-${{ github.sha }} --image=curlimages/curl --rm -i --restart=Never -- curl -f http://k8s-deploy-test-service.services.svc.cluster.local/health || kubectl run test-${{ github.sha }} --image=curlimages/curl --rm -i --restart=Never -- curl -f http://k8s-deploy-test-service.services.svc.cluster.local/
+
+    - name: Notify on Success
+      if: success()
+      run: |
+        echo "Deployment successful to ${{ env.TCA_ENV }} environment"
+
+    - name: Notify on Failure
+      if: failure()
+      run: |
+        echo "Deployment failed"
