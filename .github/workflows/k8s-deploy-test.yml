@@ -46,6 +46,8 @@ jobs:
         mkdir -p ~/.kube
         echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
         chmod 600 ~/.kube/config
+        # Test connection to secure tunnel
+        kubectl cluster-info
 
     - name: Build and Push Application Image
       uses: docker/build-push-action@v5
