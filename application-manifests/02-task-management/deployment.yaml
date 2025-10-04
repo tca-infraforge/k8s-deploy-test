@@ -8,7 +8,7 @@ metadata:
     app: task-management
     version: v1
 spec:
-  replicas: 3
+  replicas: 2
   selector:
     matchLabels:
       app: task-management
