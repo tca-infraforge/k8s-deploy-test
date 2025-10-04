@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tca-infraforge-frontend
+  namespace: apps
+  labels:
+    app: tca-infraforge
+    component: frontend
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: tca-infraforge
+    component: frontend

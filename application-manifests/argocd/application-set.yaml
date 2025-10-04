@@ -1,0 +1,67 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: user-applications
+  namespace: argocd
+spec:
+  generators:
+  - list:
+      elements:
+      - name: task-management
+        path: 02-task-management
+        namespace: apps
+        syncWave: "2"
+      - name: k8s-deploy-test
+        path: 03-k8s-deploy-test
+        namespace: apps
+        syncWave: "3"
+      - name: tca-infraforge-backend
+        path: 04-tca-infraforge
+        namespace: apps
+        syncWave: "4"
+        pattern: "backend-*.yaml"
+      - name: tca-infraforge-frontend
+        path: 04-tca-infraforge
+        namespace: apps
+        syncWave: "5"
+        pattern: "frontend-*.yaml"
+      - name: personal-vault
+        path: 05-personal-vault
+        namespace: apps
+        syncWave: "6"
+      - name: ecommerce-app
+        path: 06-ecommerce-app
+        namespace: apps
+        syncWave: "7"
+  template:
+    metadata:
+      name: "{{name}}"
+      namespace: argocd
+      labels:
+        managed-by: argocd
+        app-group: user-applications
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/YOUR-USERNAME/YOUR-REPO.git  # CHANGE THIS
+        targetRevision: main
+        path: "application-manifests/{{path}}"
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{namespace}}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+          allowEmpty: false
+        syncOptions:
+        - CreateNamespace=true
+        - PruneLast=true
+        - RespectIgnoreDifferences=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m

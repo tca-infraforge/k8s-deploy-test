@@ -1,0 +1,24 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: namespaces
+  namespace: argocd
+  labels:
+    app: namespaces
+    managed-by: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/YOUR-USERNAME/YOUR-REPO.git  # CHANGE THIS
+    targetRevision: main
+    path: application-manifests/01-namespaces
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: apps
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

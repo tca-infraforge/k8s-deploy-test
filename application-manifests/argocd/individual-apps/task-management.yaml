@@ -1,0 +1,30 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: task-management
+  namespace: argocd
+  labels:
+    app: task-management
+    managed-by: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/YOUR-USERNAME/YOUR-REPO.git  # CHANGE THIS
+    targetRevision: main
+    path: application-manifests/02-task-management
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: apps
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
