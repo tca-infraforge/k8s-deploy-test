@@ -10,7 +10,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/YOUR-USERNAME/YOUR-REPO.git  # CHANGE THIS
+    repoURL: https://github.com/tca-infraforge/k8s-deploy-test.git  # CHANGE THIS
     targetRevision: main
     path: application-manifests/05-personal-vault
   destination:
