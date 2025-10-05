@@ -44,7 +44,7 @@ spec:
     spec:
       project: default
       source:
-        repoURL: https://github.com/YOUR-USERNAME/YOUR-REPO.git  # CHANGE THIS
+        repoURL: https://github.com/tca-infraforge/k8s-deploy-test.git  # CHANGE THIS
         targetRevision: main
         path: "application-manifests/{{path}}"
       destination:
